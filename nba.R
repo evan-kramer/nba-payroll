@@ -10,6 +10,30 @@ library(lubridate)
 library(haven)
 library(rvest)
 
+# Load payroll data from URL
+payroll = read_html("https://www.basketball-reference.com/contracts/") %>% 
+  html_nodes("table") %>% 
+  html_table(fill = T) %>% 
+  .[[1]] %>% 
+  as.data.frame() 
+names(payroll) = payroll[1, ]
+payroll = payroll[2:nrow(payroll), ]
+payroll = gather(payroll, "year", "payroll", 3:ncol(payroll)) %>% 
+  transmute(team = Team, year, payroll = as.integer(str_replace_all(payroll, "[$,]", "")))
+
+# Load standings from URL
+read_html("http://www.espn.com/nba/standings") %>% 
+  html_nodes("section") %>% 
+  .[41] %>% 
+  .[[1]] %>%
+  .[[1]] %>%
+  # .[[1]] %>%
+  View()
+  html_table(fill = T)
+break()
+
+
+
 # Salary data
 read_csv("C:/Users/CA19130/Downloads/nba_salaries.csv") %>% 
   transmute(team = Team, salaries = as.integer(str_sub(`2018-19`, 2, -1))) %>% 
@@ -42,29 +66,10 @@ ggplot(data = standings, aes(y = win_pct, x = salaries, color = plot)) +
   scale_color_discrete(name = "") +
   theme_bw() 
 
-read_html("https://www.nba.com/standings") %>%
-  html_nodes("div")
-  # html_nodes("table")
-
-# nba-standings-table
-# div class='just-table'
-
-# Load data from URL
-payroll = read_html("https://www.basketball-reference.com/contracts/") %>% 
-  html_nodes("table") %>% 
-  html_table(fill = T) %>% 
-  .[[1]] %>% 
-  as.data.frame() 
-names(payroll) = payroll[1, ]
-payroll = payroll[2:nrow(payroll), ]
-payroll = gather(payroll, "year", "payroll", 3:ncol(payroll)) %>% 
-  transmute(team = Team, year, payroll = as.integer(str_replace_all(payroll, "[$,]", "")))
-
-# read_html("http://www.bls.gov/web/empsit/cesbmart.htm") %>% 
-#   html_nodes("table")[1] %>% 
-#   .[1] %>% 
-#   html_table(fill = T)
-# 
-# tbls <- html_nodes(webpage, "table")
-
-
+# Historical data? 
+for(y in seq(year(now()) - 20, year(now()))) {
+  read_html(str_c("https://www.basketball-reference.com/teams/LAL/", y, ".html")) %>% 
+    html_nodes("div") %>% 
+    .[14] %>% 
+    View()
+}
